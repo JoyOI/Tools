@@ -47,7 +47,7 @@ namespace StatusSummaryFixer
         {
             Console.WriteLine("Processing user: " + username);
             var summary = db.JudgeStatuses
-                .Where(x => x.User.UserName == username)
+                .Where(x => x.User.UserName == username && string.IsNullOrEmpty(x.ContestId) && !x.IsSelfTest)
                 .OrderBy(x => x.Result)
                 .GroupBy(x => x.ProblemId)
                 .Select(x => new { x.Key, x.First().Result })
