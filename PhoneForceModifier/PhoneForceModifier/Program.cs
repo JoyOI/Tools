@@ -31,13 +31,21 @@ namespace PhoneForceModifier
             var regex = new Regex("[+]{0,1}[0-9]{4,16}");
             if (!regex.IsMatch(phone))
             {
-                Console.WriteLine("The phone number is invalid.");
+                Console.WriteLine("[Failed] The phone number is invalid.");
                 Console.WriteLine("Press any key to exit.");
                 Console.Read();
                 return;
             }
 
             var config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+            if (!CheckPhoneNumber(config.Uc, phone))
+            {
+                Console.WriteLine("[Failed] The phone number is already existed.");
+                Console.WriteLine("Press any key to exit.");
+                Console.Read();
+                return;
+            }
+
             HandleUser(config.Uc, username, phone);
             HandleUser(config.Blog, username, phone);
             HandleUser(config.Forum, username, phone);
@@ -45,6 +53,19 @@ namespace PhoneForceModifier
             Console.WriteLine("Succeeded");
             Console.WriteLine("Press any key to exit.");
             Console.Read();
+        }
+
+        static bool CheckPhoneNumber(string connStr, string phone)
+        {
+            using (var conn = new MySqlConnection(connStr))
+            {
+                conn.Open();
+                using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM `AspNetUsers` where `PhoneNumber` = @p1", conn))
+                {
+                    cmd.Parameters.Add(new MySqlParameter("p1", phone));
+                    return Convert.ToInt32(cmd.ExecuteScalar()) == 0;
+                }
+            }
         }
 
         static void HandleUser(string connStr, string username, string phone)
